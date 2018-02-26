@@ -4,13 +4,13 @@
 
 const int trigPin  = 22 ; // Sonar sensor pin Trigger
 const int echoPin  = 23 ; // Sonar sensor pin Echo
-long duration ;
+long duration ; // Sonar Duration Variable
 
 const int pathS1     =  52;        
 const int pathS2     =  50;
 const int pathS3     =  48;
 const int pathS4     =  46;
-const int pathS5     =  44;  
+const int pathS5     =  44;   
 const int touchPin   =  42;    // Touch Sensor on the 5 Channel Line Tracker Sensor.
 int S1, S2, S3, S4, S5, S6 ;
 
@@ -24,9 +24,9 @@ const int PWM1 = 6;
 const int PWM2 = 7;
 
 const int ledLeft  = 31;    // signals as the robot turns Left....
-const int ledRight = 30;
+const int ledRight = 30;    // signals as the robot turns Right....
 
-const int buzzerPin   = 26;
+const int buzzerPin   = 10;
 
 #define I2C_ADDR          0x3F        //Define I2C Address
 #define BACKLIGHT_PIN      3
@@ -73,8 +73,7 @@ void setup() {
 
       pinMode(trigPin, OUTPUT);
       pinMode(echoPin, INPUT);
-
-      //Define the LCD as 20 columns by 4 rows 
+ 
       lcd.begin (20,4);
       
       //Switch on the backlight
@@ -84,7 +83,6 @@ void setup() {
       //goto first column (column 0) and first line (Line 0)
       lcd.setCursor(0,0);
       
-      //Print at cursor Location
       lcd.print(" -RIARA UNIVERSITY- ");
       
       //goto first column (column 0) and second line (line 1)
@@ -102,14 +100,16 @@ void setup() {
       lcd.setCursor(0,2);
       lcd.print(" -ROBOT NAVIGATING- ");
 
+      analogWrite(buzzerPin, 0);
+
+      searchPath();
+
       
 }
 
 void loop() {
   
   while( checkObjectDistance() > 20   )
-      // This could incoporate time limiting to avoid indefinate path navigation
-      // as well as observe provided navigation time duration... 
 
      {
 
@@ -119,7 +119,7 @@ void loop() {
         readpathsensor();
         
         // Robot moving on the path - While there is no object on the path.  
-        while (S1 == 0 && S2 == 1 && S3 == 1 && S4 == 1 && S5 == 0)
+        while (S1 == 0 && S2 == 1 && S3 == 1 && S4 == 1 && S5 == 0 &&( checkObjectDistance() > 20   ))
               {
                digitalWrite(ledRight, LOW); 
                digitalWrite(ledLeft,  LOW);
@@ -147,13 +147,13 @@ void loop() {
         // Robot deviating to the left
 
  
-        while ((S1 == 0 && S2 == 1 && S3 == 1 && S4 == 1 && S5 == 1 ) || (S1 == 0 && S2 == 0 && S3 == 1 && S4 == 1 && S5 == 1 ) || (S1 == 0 && S2 == 0 && S3 == 0 && S4 == 1 && S5 == 1 ) || (S1 == 0 && S2 == 0 && S3 == 0 && S4 == 0 && S5 == 1 ))
+        while ((S1 == 0 && S2 == 1 && S3 == 1 && S4 == 1 && S5 == 1 ) || (S1 == 0 && S2 == 0 && S3 == 1 && S4 == 1 && S5 == 1 ) || (S1 == 0 && S2 == 0 && S3 == 0 && S4 == 1 && S5 == 1 ) || (S1 == 0 && S2 == 0 && S3 == 0 && S4 == 0 && S5 == 1 )&&( checkObjectDistance() > 20   ))
               {
                   digitalWrite(ledRight, HIGH);
                   digitalWrite(ledLeft,  LOW); 
                   
                   analogWrite(PWM1, 80);
-                  analogWrite(PWM2, 150);      
+                  analogWrite(PWM2, 145);      
                             
                   lcd.setCursor(0,2);
                   lcd.print("   Deviating Left   ");  
@@ -167,13 +167,13 @@ void loop() {
                }
                
        // Robot deviating to the Right
-         while ( ( S1 == 1 && S2 == 1 && S3 == 1 && S4 == 1 && S5 == 0 ) || ( S1 == 1 && S2 == 1 && S3 == 1 && S4 == 0 && S5 == 0 ) || ( S1 == 1 && S2 == 1 && S3 == 0 && S4 == 0 && S5 == 0 )  || ( S1 == 1 && S2 == 0 && S3 == 0 && S4 == 0 && S5 == 0 ))
+         while ( ( S1 == 1 && S2 == 1 && S3 == 1 && S4 == 1 && S5 == 0 ) || ( S1 == 1 && S2 == 1 && S3 == 1 && S4 == 0 && S5 == 0 ) || ( S1 == 1 && S2 == 1 && S3 == 0 && S4 == 0 && S5 == 0 )  || ( S1 == 1 && S2 == 0 && S3 == 0 && S4 == 0 && S5 == 0 )&&( checkObjectDistance() > 20   ))
             
                { 
                   digitalWrite(ledRight, LOW );    
                   digitalWrite(ledLeft,  HIGH); 
                   
-                  analogWrite(PWM1, 150);
+                  analogWrite(PWM1, 130);
                   analogWrite(PWM2, 60);     
                           
                   lcd.setCursor(0,2);
@@ -227,8 +227,9 @@ void loop() {
                     digitalWrite(Motor2B, LOW);     
 
    
-                    robotTurnRight();
+                    
                     readpathsensor();
+                    robotTurnRight();
 
           
                 }
@@ -236,27 +237,7 @@ void loop() {
      }
      
 
-        // If the Robot finds and oject on the path, It should stop moving, diplay, and hoot 
-        // Then should Resume path navigation once the path is cleared.
-
-         while( checkObjectDistance() < 19  )
-         
-         {
-
-          lcd.setCursor(0,1);
-          lcd.print("                    ");
-          
-          lcd.setCursor(0,2);
-          lcd.print("-! OBJECT ON PATH !-");
-
-          lcd.setCursor(0,3);
-          lcd.print("                    ");
-
-          brake();
-          robotTurnLeft();
-          hoot();         
-          delay(200);
-         }                  
+        objectFound();           
 
 }
 
@@ -270,14 +251,19 @@ int checkObjectDistance(){
   pinMode(echoPin, INPUT);
   duration = pulseIn(echoPin, HIGH);
   long cm = (duration/2) / 29.1;
+  Serial.print(cm);
+  Serial.print("cm");
+  Serial.println();
   return cm;
 }
 
 void hoot(){
-  analogWrite(buzzerPin, 168);
-  analogWrite(buzzerPin, 0);
-  analogWrite(buzzerPin, 168);
-  analogWrite(buzzerPin, 0);
+    tone(buzzerPin, 400, 1000);         
+    delay(300);
+    tone(buzzerPin, 450, 1000);
+    delay(300);          
+    tone(buzzerPin, 500, 1500);
+    noTone(buzzerPin);
 }
 
 void readpathsensor(){
@@ -408,8 +394,10 @@ void searchPath(){
 
           while(checkObjectDistance > 20){
             readpathsensor();
-            if(S1 == 0 && S2 == 0 && S3 == 0 && S4 == 0 && S5 == 0){
-              
+            if(S1 == 0 && S2 == 0 && S3 == 0 && S4 == 0 && S5 == 0 && (checkObjectDistance > 20)){
+              analogWrite(PWM1, 160);
+              analogWrite(PWM2, 160);
+           
               digitalWrite(Motor1A, LOW);     //  
               digitalWrite(Motor1B, HIGH);    // 
               digitalWrite(Motor2A, LOW);     // 
@@ -419,13 +407,14 @@ void searchPath(){
               
             }
 
-            if (S1 == 1 && S2 == 0 && S3 == 0 && S4 == 0 && S5 == 0 )  
+            if (S1 == 1 && S2 == 0 && S3 == 0 && S4 == 0 && S5 == 0 && (checkObjectDistance > 20) )  
                    
                     {                        
                         while( S3 != 1  )
                       
                         { 
-
+                          analogWrite(PWM1, 160);
+                          analogWrite(PWM2, 160);
                           digitalWrite(Motor1A, LOW);     //  
                           digitalWrite(Motor1B, HIGH);    //  
                           digitalWrite(Motor2A, LOW);     //  
@@ -437,13 +426,14 @@ void searchPath(){
                        brake();
                        return;
                     }
-             if (S1 == 0 && S2 == 0 && S3 == 0 && S4 == 0 && S5 == 1 )  
+             if (S1 == 0 && S2 == 0 && S3 == 0 && S4 == 0 && S5 == 1 && (checkObjectDistance > 20))  
                    
                     {   
                      while( S3 != 1  )
                       
                         { 
-                            
+                            analogWrite(PWM1, 160);
+                            analogWrite(PWM2, 160);
                           digitalWrite(Motor1A, LOW);      
                           digitalWrite(Motor1B, HIGH);     
                           digitalWrite(Motor2A, LOW);      
@@ -459,7 +449,7 @@ void searchPath(){
 
 
 
-            if (S1 == 1 && S2 == 1 && S3 == 1 && S4 == 1 && S5 == 1 )  
+            if (S1 == 1 && S2 == 1 && S3 == 1 && S4 == 1 && S5 == 1&& (checkObjectDistance > 20) )  
                    
                     {   
                          brake();
@@ -469,7 +459,7 @@ void searchPath(){
                     }
                    
 
-          if (S1 == 0 && S2 == 1 && S3 == 1 && S4 == 1 && S5 == 0 )  
+          if (S1 == 0 && S2 == 1 && S3 == 1 && S4 == 1 && S5 == 0 && (checkObjectDistance > 20) )  
          
           {   
                brake();
@@ -496,5 +486,27 @@ void searchPath(){
           delay(200);
           readpathsensor();
      }
+}
+
+void objectFound(){
+                  // If the Robot finds and oject on the path, It should stop moving, diplay, and hoot 
+                  // Then should Resume path navigation once the path is cleared.
+          while( checkObjectDistance() < 19  )
+         
+         {
+
+          lcd.setCursor(0,1);
+          lcd.print("                    ");
+          
+          lcd.setCursor(0,2);
+          lcd.print("-! OBJECT ON PATH !-");
+
+          lcd.setCursor(0,3);
+          lcd.print("                    ");
+
+          brake();
+          hoot();         
+          delay(200);
+         }       
 }
 
